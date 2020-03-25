@@ -1,6 +1,9 @@
 from nltk.corpus import conll2002
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.linear_model import Perceptron
+from sklearn.linear_model import SGDClassifier
+from sklearn.linear_model import PassiveAggressiveClassifier
+import sklearn_crfsuite
 from sklearn.metrics import precision_recall_fscore_support
 
 # Assignment 7: NER
@@ -8,14 +11,20 @@ from sklearn.metrics import precision_recall_fscore_support
 # add to or modify any part of it.
 
 
-def getfeats(word, o):
+def getfeats(word, o, pos):
     """ This takes the word in question and
     the offset with respect to the instance
     word """
     o = str(o)
     features = [
-        (o + 'word', word)
+        (o + 'word', word),
         # TODO: add more features here.
+        ('word.isupper()', word.isupper()),
+        ('word.istitle()', word.istitle()),
+        ('word.isdigit()', word.isdigit()),
+        ('word.lower()', word.lower()),
+        ('isApostrophePresent()', (word.find("'") != -1)),
+        ('POS', pos)
     ]
     return features
     
@@ -29,9 +38,10 @@ def word2features(sent, i):
     for o in [-1,0,1]:
         if i+o >= 0 and i+o < len(sent):
             word = sent[i+o][0]
-            featlist = getfeats(word, o)
+            pos = sent[i+o][1]
+            featlist = getfeats(word, o, pos)
             features.extend(featlist)
-    
+
     return dict(features)
 
 if __name__ == "__main__":
@@ -53,14 +63,16 @@ if __name__ == "__main__":
     X_train = vectorizer.fit_transform(train_feats)
 
     # TODO: play with other models
-    model = Perceptron(verbose=1)
+    # model = Perceptron(verbose=1) # Test f1: 57.37
+    # model = SGDClassifier()  # Test f1: 36.48
+    model = PassiveAggressiveClassifier() # Test f1:60.89
     model.fit(X_train, train_labels)
 
     test_feats = []
     test_labels = []
 
     # switch to test_sents for your final results
-    for sent in dev_sents:
+    for sent in test_sents:
         for i in range(len(sent)):
             feats = word2features(sent,i)
             test_feats.append(feats)
@@ -73,7 +85,7 @@ if __name__ == "__main__":
     print("Writing to results.txt")
     # format is: word gold pred
     with open("results.txt", "w") as out:
-        for sent in dev_sents: 
+        for sent in test_sents: 
             for i in range(len(sent)):
                 word = sent[i][0]
                 gold = sent[i][-1]
