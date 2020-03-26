@@ -1,12 +1,15 @@
 from nltk.corpus import conll2002
 from sklearn.feature_extraction import DictVectorizer
-from sklearn.linear_model import Perceptron
-from sklearn.linear_model import SGDClassifier
-from sklearn.linear_model import PassiveAggressiveClassifier
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import Perceptron, PassiveAggressiveClassifier, RidgeClassifier, LogisticRegression, \
+    SGDClassifier, LogisticRegressionCV, RidgeClassifierCV
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.svm import LinearSVC, SVC
+from sklearn.neural_network.multilayer_perceptron import MLPClassifier
 from sklearn_crfsuite import CRF
-from sklearn.metrics import precision_recall_fscore_support
 import pickle
+# import sklearn_crfsuite
+# from sklearn.metrics import precision_recall_fscore_support
 
 # Assignment 7: NER
 # This is just to help you get going. Feel free to
@@ -42,13 +45,13 @@ def word2features(sent, i):
     sentence."""
     features = []
     # the window around the token
-    for o in [-1,0,1]:
+    for o in [-3,-2,-1,0,1,2,3,4]:
         if i+o >= 0 and i+o < len(sent):
             word = sent[i+o][0]
-            pos = sent[i+o][1]
+            pos = sent[i + o][1]
             featlist = getfeats(word, o, pos)
             features.extend(featlist)
-
+    
     return dict(features)
 
 def sent2features(sent):
@@ -70,7 +73,6 @@ if __name__ == "__main__":
     '''
     train_feats = []
     train_labels = []
-
     for sent in train_sents:
         for i in range(len(sent)):
             feats = word2features(sent,i)
@@ -86,7 +88,8 @@ if __name__ == "__main__":
     test_feats = []
     test_labels = []
 
-    for sent in dev_sents:                         ### Change to test_sents ###
+    # switch to test_sents for your final results
+    for sent in train_sents:                              # !!!
         for i in range(len(sent)):
             feats = word2features(sent,i)
             test_feats.append(feats)
@@ -95,11 +98,15 @@ if __name__ == "__main__":
     X_test = vectorizer.transform(test_feats)
     y_pred = model.predict(X_test)
 
+    # Save model
+    pickle.dump(model, open('model', 'wb'))
+    # loaded_model = pickle.load(open('model', 'rb'))
+
     j = 0
     print("Writing to results.txt")
     # format is: word gold pred
-    with open("results.txt", "w") as out:
-        for sent in dev_sents:                      ### Change to test_sents ###
+    with open("train_results.txt", "w") as out:          # !!!
+        for sent in train_sents:                         # !!!
             for i in range(len(sent)):
                 word = sent[i][0]
                 gold = sent[i][-1]
@@ -141,10 +148,4 @@ if __name__ == "__main__":
         out.write("\n")
     ##########################################################
 
-    print("Now run: python conlleval.py results.txt")
-
-
-
-
-
-
+    print("Now run: python conlleval.py dev_results.txt")
