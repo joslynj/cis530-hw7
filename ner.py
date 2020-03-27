@@ -29,13 +29,34 @@ def getfeats(word, o, pos):
         # ('word.isdigit()', word.isdigit()),
         # ('isApostrophePresent()', "'" in word),
         # ('isHyphenPresent()', '-' in word),
-       	# ('prefix-1', word[0]),
-       	# ('prefix-2', word[:2]),
-       	# ('prefix-3', word[:3]),
-       	# ('suffix-1', word[-1]),
-       	# ('suffix-2', word[-2:]),
-       	# ('suffix-3', word[-3:])
+        # ('prefix-1', word[0]),
+        # ('prefix-2', word[:2]),
+        # ('prefix-3', word[:3]),
+        # # ('prefix-3', word[:4]),
+        # ('suffix-1', word[-1]),
+        # ('suffix-2', word[-2:]),
+        # ('suffix-3', word[-3:])
+        # ('suffix-3', word[-4:])
     ]
+    if int(o) == 0:
+        feats = [
+            ('word.isupper()', word.isupper()),
+            ('word.istitle()', word.istitle()),
+            ('word.isdigit()', word.isdigit()),
+            ('isApostrophePresent()', "'" in word),
+            ('isHyphenPresent()', '-' in word),
+            ('prefix-1', word[0]),
+            ('prefix-2', word[:2]),
+            ('prefix-3', word[:3]),
+            ('prefix-4', word[:4]),
+            ('prefix-5', word[:5]),
+            ('suffix-1', word[-1]),
+            ('suffix-2', word[-2:]),
+            ('suffix-3', word[-3:]),
+            ('suffix-4', word[-4:]),
+            ('suffix-5', word[-5:])
+            ]
+        features.extend(feats)
     return features
     
 
@@ -117,6 +138,7 @@ if __name__ == "__main__":
     '''
 
     ###### Use the following when experimenting with CRF ######
+    
     X_train = [sent2features(s) for s in train_sents]
     train_labels = [sent2labels(s) for s in train_sents]
     X_dev = [sent2features(s) for s in dev_sents]
@@ -131,14 +153,15 @@ if __name__ == "__main__":
     all_possible_transitions=True)
     model.fit(X_train, train_labels)
     # Save trained model in current directory
-    # pickle.dump(model, open('model', 'wb')) 
-    y_pred = model.predict(X_dev)                  ### Change to X_test ###
+    pickle.dump(model, open('model', 'wb')) 
+    # model = pickle.load(open('model', 'rb'))
+    y_pred = model.predict(X_test)                  ### Change to X_test ###
 
     j = 0
     print("Writing to results.txt")
     # format is: word gold pred
-    with open("results.txt", "w") as out:
-        for sent in dev_sents:                     ### Change to test_sents ###
+    with open("test_results.txt", "w") as out:
+        for sent in test_sents:                     ### Change to test_sents ###
             for i in range(len(sent)):
                 word = sent[i][0]
                 gold = sent[i][-1]
@@ -146,6 +169,8 @@ if __name__ == "__main__":
                 out.write("{}\t{}\t{}\n".format(word,gold,pred))
             j += 1
         out.write("\n")
+        
+        
     ##########################################################
 
     print("Now run: python conlleval.py dev_results.txt")
